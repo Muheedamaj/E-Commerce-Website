@@ -3,11 +3,11 @@ A fully responsive and interactive shopping website built using core web technol
 => Features
    * Core Functionalities
 
-   Multi-Page Design — Includes Home, Products, Cart, and Contact pages.
+     Multi-Page Design — Includes Home, Products, Cart, and Contact pages.
 
-   Product Display Cards — Clean layout with images, descriptions, and pricing.
+     Product Display Cards — Clean layout with images, descriptions, and pricing.
 
-   Responsive Layout — Built using CSS Flexbox & Grid for all devices.
+     Responsive Layout — Built using CSS Flexbox & Grid for all devices.
 
  * JavaScript Features
 
