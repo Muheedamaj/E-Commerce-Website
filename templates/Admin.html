@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+   
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+    *{margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+      body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: #d30640;
+      height: 100vh;
+      background: linear-gradient(to right, #e83fb8, #f5f5dc);
+      background-attachment: fixed;
+    }
+
+     .container {
+      max-width: 400px;
+      margin: 80px auto;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    }
+
+
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
+
+     button {
+      width: 100%;
+      padding: 12px;
+      background-color: #f15aa8;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+     button:hover {
+      background-color:#d30640;
+    }
+
+    .error {
+      color: #d30640;
+      background-color: #ffe6e6;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      border: 1px solid #d30640;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #d30640;
+    }
+
+</style>
+<body>
+    <div class="container">
+    <h2>Admin Login</h2>
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+    <form action="{% url 'alog' %}" method="POST">
+        {% csrf_token %}
+        {% if request.GET.next %}
+        <input type="hidden" name="next" value="{{ request.GET.next }}">
+        {% endif %}
+        <label>Username</label>
+        <input type="text" placeholder="username" name="username" required><br><br>
+        <label>Password</label>
+        <input type="password" placeholder="Password" name="password" required><br><br>
+        <button type="submit" class="btn btn-primary">Login</button>
+        </form>
+        </div>
+</body>
+</html>

@@ -1,0 +1,316 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Home - Mcreations</title>
+  <style>
+    /* ====== Base ====== */
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: #d30640;
+      min-height: 100vh;
+      background: linear-gradient(to right, #e83fb8, #f5f5dc);
+      background-attachment: fixed;
+      margin: 0;
+    }
+
+    nav {
+      background-color: rgba(0, 0, 0, 0.6);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      gap: 12px;
+    }
+
+    .brand { font-size: 1.4rem; font-weight:700; color: rgb(244,12,151); }
+    .nav-links { list-style:none; display:flex; gap:10px; align-items:center; margin:0; padding:0; }
+    .nav-links a { color:white; text-decoration:none; padding:8px 12px; border-radius:6px; }
+    .nav-links a:hover { background: rgba(255,255,255,0.12); }
+
+    /* HERO (one viewport height) */
+    #heroSection {
+      height: 100vh;                 /* one page length */
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* subtle overlay so text is readable */
+    #heroSection .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(rgba(232,63,184,0.30), rgba(245,245,220,0.15));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    #heroSection .hero-inner {
+      position: relative; /* sits above overlay visually */
+      text-align: center;
+      color: #fff;
+      z-index: 2;
+      max-width: 900px;
+    }
+    #heroSection .hero-inner h1 {
+      color: #fff;
+      font-size: 2.25rem;
+      margin: 0 0 8px;
+      text-shadow: 0 4px 18px rgba(0,0,0,0.4);
+    }
+    #heroSection .hero-inner p {
+      color: rgba(255,255,255,0.95);
+      margin: 0;
+      font-size: 1.05rem;
+      text-shadow: 0 3px 10px rgba(0,0,0,0.25);
+    }
+
+    /* Products (below hero) */
+    .products {
+      max-width:1300px;
+      margin: 30px auto 60px;
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px,1fr));
+      gap:28px;
+      padding:0 16px;
+    }
+    .product-card { background: rgba(255,255,255,0.95); border-radius:10px; text-align:center; box-shadow:0 4px 12px rgba(0,0,0,0.06); display:flex; flex-direction:column; height: auto; min-height: 500px; overflow:visible; }
+    .product-card img { width:100%; height:360px; object-fit:cover; border-radius:6px 6px 0 0; flex-shrink:0; }
+    .product-card h3 { color:#e90f6d; margin:8px 12px 0; font-size:1rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .product-card p { color:#555; font-size:0.95rem; margin:2px 12px 0; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; line-height:1.2; max-height:calc(1.2em * 3); }
+
+    .product-card .meta { margin:4px 0; padding:0 12px; }
+    .product-actions { display:flex; justify-content:center; gap:8px; margin-top:4px; margin-bottom:12px; flex-wrap:wrap; padding:0 8px; }
+    .product-actions button { padding:8px 10px; border-radius:6px; border:none; cursor:pointer; font-weight:600; background:#e90f6d; color:#fff; }
+
+    /* qty controls */
+    .qty-controls { display:flex; gap:6px; align-items:center; justify-content:center; }
+    .qty-controls button { padding:6px 8px; border-radius:6px; border:none; cursor:pointer; font-weight:600; background:#FFB6C1; color:#7a0b45; }
+    .qty-controls button:hover { background:#FFA0B4; }
+    .qty-input { width:60px; text-align:center; }
+
+    @media (max-width:768px) {
+      nav { flex-direction:column; align-items:center; gap:8px; padding:12px; }
+      #heroSection .hero-inner h1 { font-size: 1.6rem; }
+      #heroSection { height: 60vh; } /* reduce height on small screens */
+      .products { margin:20px 12px 60px; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); }
+      .product-card { min-height: 440px; }
+      .product-card img { height: 300px; }
+      .product-card h3 { font-size:0.95rem; }
+      .product-card p { -webkit-line-clamp:2; max-height:calc(1.2em * 2); }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div class="brand">Mcreations</div>
+      <form action="{% url 'homepage' %}" method="get" style="display:flex; gap:6px; align-items:center;">
+        <input name="q" type="text" placeholder="Search products..." value="{{ request.GET.q|default:'' }}" style="padding:6px 8px; border-radius:6px; border:1px solid #ddd;">
+        <button type="submit" style="padding:6px 10px; border-radius:6px; border:none; background:#fff; color:#c10465; font-weight:600;">Search</button>
+      </form>
+    </div>
+
+    <ul class="nav-links">
+      <li><a href="{% url 'homepage' %}">Home</a></li>
+
+      {# Show cart/orders only when user is authenticated #}
+      {% if user.is_authenticated %}
+        <li><a href="{% url 'cart_view' %}">Cart</a></li>
+        <li><a href="{% url 'order_history' %}">Orders</a></li>
+        <li><a href="{% url 'user_logout' %}">Logout</a></li>
+      {% else %}
+        <li><a href="{% url 'user_register' %}">Register</a></li>
+        <li><a href="{% url 'user_login' %}">Login</a></li>
+      {% endif %}
+    </ul>
+  </nav>
+
+  <!-- HERO SECTION (uses random product image from below) -->
+  <section id="heroSection" role="banner" aria-label="Featured">
+    <div class="hero-overlay"></div>
+    <div class="hero-inner">
+      <h1>Welcome to M<i>creations</i></h1>
+      <p>Explore our latest products and find your perfect style!</p>
+    </div>
+  </section>
+
+  <section class="products" aria-live="polite">
+    {% for product in products %}
+      <div class="product-card" data-id="{{ product.id }}" data-price="{{ product.price|default:0 }}">
+        {% if product.image %}
+          {# using onerror to fallback if image file missing or URL broken #}
+          <img src="{{ product.image.url }}" alt="{{ product.title }}" loading="lazy" onerror="this.onerror=null;this.src='https://via.placeholder.com/250x180.png?text=No+Image'">
+        {% else %}
+          <img src="https://via.placeholder.com/250x180.png?text=No+Image" alt="No image">
+        {% endif %}
+
+        <h3>{{ product.title }}</h3>
+        {% if product.category %}
+        <div style="font-size:0.85rem; color:#999; margin-bottom:4px;">
+          <span style="background:#f0f0f0; padding:2px 8px; border-radius:4px;">{{ product.category.name }}</span>
+        </div>
+        {% endif %}
+        <p>{{ product.description|truncatechars:120 }}</p>
+
+        <div class="meta">
+          <strong>Price: ₹ <span class="price">{{ product.price|default:"0.00" }}</span></strong>
+        </div>
+
+        <div class="product-actions">
+          <div class="qty-controls" role="group" aria-label="quantity controls">
+            <button class="qty-decr" aria-label="decrease">-</button>
+            <input class="qty-input" type="number" value="1" min="1" aria-label="quantity">
+            <button class="qty-incr" aria-label="increase">+</button>
+          </div>
+
+          <div style="margin-left:8px;">
+            <button class="btn-add" data-product-id="{{ product.id }}">Add to cart</button>
+            <button class="btn-buy" data-product-id="{{ product.id }}">Buy now</button>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p style="grid-column:1/-1; text-align:center;">No products found.</p>
+    {% endfor %}
+  </section>
+
+<script>
+(function() {
+  // produce a literal JS boolean (true/false) from Django
+  const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i=0;i<cookies.length;i++){
+        const c = cookies[i].trim();
+        if (c.substring(0, name.length+1) === (name + '=')) {
+          cookieValue = decodeURIComponent(c.substring(name.length+1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  const csrftoken = getCookie('csrftoken');
+
+  // ---------- hero image selection ----------
+  // choose a random image from the product cards' <img> tags and set as hero background
+  function setRandomHeroFromProducts() {
+    try {
+      const imgEls = Array.from(document.querySelectorAll('.product-card img'));
+      const urls = imgEls
+        .map(i => (i && i.src) ? i.src : '')
+        .filter(Boolean)
+        .filter((v, i, a) => a.indexOf(v) === i); // unique
+      if (urls.length === 0) {
+        // no images: leave default gradient background (hero overlay still visible)
+        return;
+      }
+      const chosen = urls[Math.floor(Math.random() * urls.length)];
+      const hero = document.getElementById('heroSection');
+      if (hero) {
+        hero.style.backgroundImage = `url('${chosen}')`;
+        hero.style.backgroundSize = 'cover';
+        hero.style.backgroundPosition = 'center';
+      }
+    } catch (e) {
+      // fail silently
+      console.error('hero image set error', e);
+    }
+  }
+
+  // Run after DOM content loaded so product images exist
+  document.addEventListener('DOMContentLoaded', function() {
+    setRandomHeroFromProducts();
+  });
+
+  // ---------- existing click handlers (qty / add / buy) ----------
+  document.addEventListener('click', function(e) {
+    const decr = e.target.closest('.qty-decr');
+    const incr = e.target.closest('.qty-incr');
+    const addBtn = e.target.closest('.btn-add');
+    const buyBtn = e.target.closest('.btn-buy');
+
+    // quantity buttons
+    if (decr || incr) {
+      const row = (decr || incr).closest('.product-card');
+      if (!row) return;
+      const input = row.querySelector('.qty-input');
+      let val = parseInt(input.value, 10) || 1;
+      if (decr) val = Math.max(1, val - 1);
+      if (incr) val = val + 1;
+      input.value = val;
+      return;
+    }
+
+    // Add / Buy
+    if (addBtn || buyBtn) {
+      if (!isAuthenticated) {
+        // redirect to login and return to this page after login
+        const loginUrl = "{% url 'user_login' %}" + "?next=" + encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.href = loginUrl;
+        return;
+      }
+
+      const control = addBtn || buyBtn;
+      const pid = control.dataset.productId;
+      const row = control.closest('.product-card');
+      if (!pid || !row) {
+        alert('Could not determine product.');
+        return;
+      }
+      const qtyInput = row.querySelector('.qty-input');
+      const qty = (qtyInput && qtyInput.value) ? qtyInput.value : 1;
+
+      fetch("{% url 'add_to_cart' %}", {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrftoken,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({ product_id: pid, qty: qty })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.ok) {
+          if (buyBtn) {
+            window.location.href = "{% url 'cart_view' %}";
+          } else {
+            // small unobtrusive feedback (replace alert with custom toast if preferred)
+            alert('Added to cart' + (data.cart_count ? ' — items in cart: ' + data.cart_count : ''));
+          }
+        } else {
+          const err = data && data.error ? data.error : 'server error';
+          alert('Could not add to cart: ' + err);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Add to cart failed (check console).');
+      });
+
+      return;
+    }
+  });
+
+  // prevent Enter in qty input submitting forms accidentally
+  document.querySelectorAll('.qty-input').forEach(input => {
+    input.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') e.preventDefault();
+    });
+  });
+
+})();
+</script>
+</body>
+</html>

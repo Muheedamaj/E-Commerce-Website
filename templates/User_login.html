@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+          body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: #d30640;
+      height: 100vh;
+      background: linear-gradient(to right, #e83fb8, #f5f5dc);
+      background-attachment: fixed;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: bold;
+      color: #ee1e71;
+    }
+    input[type="number"],
+    input[type="password"]
+   {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: 80px auto;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    }
+
+      button {
+      width: 100%;
+      padding: 12px;
+      background-color: #f15aa8;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #c30363;
+    }
+
+    p.error {
+      color: red;
+      text-align: center;
+      margin-top: 12px;
+    }
+    </style>
+</head>
+
+<body>
+      <div class="container">
+    <h2>User Login</h2>
+    <form action="/userlog/" method="POST">
+      {% csrf_token %}
+      <label for="phone">Phone Number</label>
+      <input type="number" id="phone" name="phone" placeholder="Enter your registered number" required>
+
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" placeholder="Enter your password" required>
+
+      <button type="submit">Login</button>
+
+      {% if error %}
+        <p class="error">{{ error }}</p>
+      {% endif %}
+    </form>
+
+    <div class="links">
+      <p>Don't have an account? <a href="{% url 'user_register' %}">Register here</a></p>
+    </div>
+  </div>
+</body>
+</html>

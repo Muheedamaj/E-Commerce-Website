@@ -1,0 +1,106 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Invoice - Order #{{ order.id }}</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { font-family: "Segoe UI", Arial, sans-serif; color:#333; background: #f7f7f7; padding:20px; }
+    .invoice { max-width:900px; margin:0 auto; background:white; padding:24px; border-radius:8px; box-shadow:0 6px 20px rgba(0,0,0,0.06); }
+    .brand { color: #d30640; font-weight:700; font-size:1.25rem; }
+    .muted { color:#6b6b6b; }
+    .items td, .items th { vertical-align:middle; }
+    .total-row { font-weight:700; font-size:1.05rem; }
+    .btn-row { display:flex; gap:10px; margin-top:18px; }
+    @media print {
+      .no-print { display:none !important; }
+      body { background: white; }
+    }
+  </style>
+</head>
+<body>
+  <div class="invoice">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <div class="brand">Mcreations</div>
+        <div class="muted">Invoice</div>
+      </div>
+      <div class="text-end">
+        <div>Order #<strong>{{ order.id }}</strong></div>
+        <div class="muted">Placed: {{ order.created_at|date:"M d, Y H:i" }}</div>
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="row">
+      <div class="col-md-6">
+        <h6>Bill To</h6>
+        <div><strong>{{ order.name }}</strong></div>
+        <div class="muted">{{ order.email }}</div>
+        <div class="muted">{{ order.phone }}</div>
+        <div style="margin-top:8px;">{{ order.address|linebreaksbr }}</div>
+      </div>
+      <div class="col-md-6 text-md-end">
+        <h6>Payment</h6>
+        <div class="muted">Status: {{ order.get_status_display|default:"Paid" }}</div>
+        <div style="margin-top:10px;"><strong>Total: ₹{{ order.total }}</strong></div>
+      </div>
+    </div>
+
+    <div class="table-responsive mt-4">
+      <table class="table items">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th style="width:120px">Qty</th>
+            <th style="width:140px">Price</th>
+            <th style="width:140px">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in order.orderitem_set.all %}
+            <tr>
+              <td>
+                <div style="display:flex; gap:10px; align-items:center;">
+                  {% if item.product and item.product.image %}
+                    <img src="{{ item.product.image.url }}" alt="" style="width:60px; height:45px; object-fit:cover; border-radius:4px;">
+                  {% endif %}
+                  <div>
+                    <div style="font-weight:600;">{{ item.title }}</div>
+                    {% if item.product and item.product.sku %}
+                      <div class="muted">SKU: {{ item.product.sku }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+              </td>
+              <td>{{ item.qty }}</td>
+              <td>₹{{ item.price }}</td>
+              <td>₹{{ item.subtotal }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="d-flex justify-content-end">
+      <div style="width:320px;">
+        <div class="d-flex justify-content-between muted"><span>Subtotal</span><span>₹{{ order.total }}</span></div>
+        <!-- if you have taxes/shipping fields show here -->
+        <div class="total-row d-flex justify-content-between mt-2"><span>Total</span><span>₹{{ order.total }}</span></div>
+      </div>
+    </div>
+
+    <div class="btn-row no-print">
+      <a href="{% url 'homepage' %}" class="btn btn-outline-secondary">Home</a>
+      <a href="{% url 'homepage' %}" class="btn btn-outline-secondary">Contact</a>
+      <button onclick="window.print()" class="btn btn-primary">Print / Save as PDF</button>
+      <!-- If you have a separate download endpoint, link it here -->
+    </div>
+
+    <p class="muted mt-3"><small>Thank you for shopping with Mcreations.</small></p>
+  </div>
+</body>
+</html>

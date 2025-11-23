@@ -1,0 +1,681 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin — Product Gallery & Purchase History</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: #f70a22;
+      min-height: 100vh;
+      background: linear-gradient(to right, #b40530, #f5f5dc);
+      background-attachment: fixed;
+    }
+
+    /* Top nav */
+    nav.topbar {
+      background: rgba(0,0,0,0.6);
+      padding: 12px 24px;
+      color: #fff;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    nav .brand { color:#fff; font-weight:700; font-size:1.25rem; }
+    nav .nav-links { list-style:none; display:flex; gap:10px; align-items:center; margin:0; padding:0; }
+    nav .nav-links a { color:white; text-decoration:none; padding:8px 12px; border-radius:6px; }
+    nav .nav-links a:hover { background: rgba(255,255,255,0.08); }
+
+    .container { padding-top:28px; padding-bottom:40px; }
+
+    .card {
+      border-radius: 15px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transition: transform .2s;
+      background: #fff;
+      color: #222;
+      display: flex;
+      flex-direction: column;
+      height: auto; /* allow content to determine height */
+      min-height: 480px;
+    }
+    .card:hover { transform: scale(1.02); }
+    .add-card {
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border:2px dashed rgba(241,227,229,0.8);
+      height:100px;
+      width:100px;
+      font-size:3.5rem;
+      color:#eff1db;
+      cursor:pointer;
+      border-radius:15px;
+      transition: all .2s ease;
+      margin:0 auto;
+    }
+    .add-card:hover { background-color: rgba(247,10,34,0.08); transform: scale(1.06); }
+    h2 { color:#fff8f8; font-weight:700; letter-spacing:1px; }
+    .card-img-top { height: 420px; object-fit: cover; border-top-left-radius: 15px; border-top-right-radius: 15px; }
+    .card-body { flex: 1 1 auto; overflow: visible; padding: 8px 12px; display:flex; flex-direction:column; gap:2px; }
+    .card-title { font-size: 1rem; margin-bottom: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-text { font-size: 0.9rem; color:#555; margin-bottom: 0; display:-webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.2; max-height: calc(1.2em * 4); min-height: calc(1.2em * 3); }
+    .card-price { margin: 0; }
+    .card-actions { margin-top:2px; gap:6px; flex-wrap:wrap; }
+    .card-actions .btn { padding: 4px 8px; font-size: 0.85rem; }
+    .card-actions { display:flex; gap:8px; justify-content:center; }
+    .btn-edit { min-width: 72px; }
+    .card-price { font-weight:700; color:#e90f6d; margin:8px 0; }
+
+    /* purchase history */
+    .history-wrap { margin-top: 40px; }
+    .history-card { border-radius:10px; background:rgba(255,255,255,0.95); padding:16px; box-shadow:0 6px 18px rgba(0,0,0,0.06); color:#2b0a26; }
+    .history-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px dashed #f5c0dc; }
+    .history-item:last-child { border-bottom: none; }
+    .muted { color:#6b6b6b; font-size:0.95rem; }
+
+    @media (max-width:768px) {
+      .card { height: auto; min-height: 420px; }
+      .card-img-top { height: 360px; }
+      .card-title { font-size: 0.95rem; }
+      .card-text { -webkit-line-clamp: 3; max-height: calc(1.2em * 3); min-height: calc(1.2em * 3); }
+      nav.topbar { padding:10px; }
+      .nav-links { gap:6px; flex-wrap:wrap; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top navigation -->
+  <nav class="topbar" role="navigation" aria-label="Main">
+    <div style="display:flex; align-items:center; gap:18px;">
+      <div class="brand">Mcreations — Admin</div>
+
+      <form action="{% url 'homepage' %}" method="get" class="d-none d-md-flex" style="gap:8px; align-items:center;">
+        <input type="text" name="q" placeholder="Search products..." value="{{ request.GET.q|default:'' }}" class="form-control form-control-sm" style="width:220px;">
+        <button type="submit" class="btn btn-sm btn-outline-light">Search</button>
+      </form>
+    </div>
+
+    <ul class="nav-links" role="menu">
+      <li><a href="{% url 'homepage' %}">Home</a></li>
+      <li><a href="{% url 'cart_view' %}">Cart</a></li>
+      <li><a href="{% url 'order_history' %}">All Orders</a></li>
+      <li><a href="{% url 'homepage' %}">Contact</a></li>
+      <li><a href="{% url 'homepage' %}">Logout</a></li>
+    </ul>
+  </nav>
+
+  <div class="container py-5">
+    <h2 class="text-center mb-5">Product Gallery</h2>
+
+    <div id="cardContainer" class="row g-4 justify-content-center">
+      {% for product in products %}
+      <div class="col-md-4" data-id="{{ product.id }}" {% if product.category %}data-category-id="{{ product.category.id }}"{% endif %}>
+        <div class="card">
+          {# If product has an image, use it; otherwise use a lightweight placeholder first, JS will swap with curated image #}
+          {% if product.image %}
+            <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.title }}" loading="lazy"
+                 onerror="this.onerror=null;this.src='https://via.placeholder.com/600x400?text=No+Image'">
+          {% else %}
+            <img src="https://via.placeholder.com/600x400?text=Loading" class="card-img-top" alt="No image">
+          {% endif %}
+          <div class="card-body text-center">
+            <h5 class="card-title">{{ product.title }}</h5>
+            <p class="card-text text-truncate" style="max-height:3.6em; overflow:hidden;">{{ product.description }}</p>
+            <p class="card-price">₹ {{ product.price|default:"0.00" }}</p>
+            <div class="card-actions">
+              <button class="btn btn-sm btn-danger btn-edit" data-action="edit">Edit</button>
+              <button class="btn btn-sm btn-danger btn-delete" data-action="delete">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+      <!-- add-card (plus) -->
+      <div class="col-md-2 d-flex justify-content-center align-items-center">
+        <div id="addCard" class="add-card" title="Add product">+</div>
+      </div>
+    </div>
+
+    <!-- Purchase history (admin page: always visible) -->
+    <div class="history-wrap">
+      <div class="history-card mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h4 style="margin:0;">Purchase History</h4>
+          <a class="btn btn-sm btn-outline-secondary" href="{% url 'order_history' %}">View all</a>
+        </div>
+
+        {% if orders and orders|length > 0 %}
+          {% for order in orders|slice:":10" %}
+            <div class="history-item" data-order-id="{{ order.id }}">
+              <div>
+                <div style="font-weight:600;">Order #{{ order.id }}</div>
+                <div class="muted">Placed: {{ order.created_at|date:"M d, Y H:i" }}</div>
+                <div class="muted">Customer: {{ order.name }} &lt;{{ order.email }}&gt;</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-weight:700;">₹{{ order.total }}</div>
+                <div style="margin-top:6px;">
+                  <a class="btn btn-sm btn-outline-primary" href="{% url 'invoice' order.id %}">Invoice</a>
+                  <a class="btn btn-sm btn-outline-success" href="{% url 'order_detail' order.id %}">Details</a>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+          {% if orders|length > 10 %}
+            <div class="mt-3 text-center">
+              <a href="{% url 'order_history' %}" class="btn btn-sm btn-outline-primary">See all orders</a>
+            </div>
+          {% endif %}
+        {% else %}
+          <p class="muted"></p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal (Add / Edit) -->
+  <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <form id="productForm" class="modal-content" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title" id="productModalLabel">Edit Product</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="productId" name="id" value="">
+          <div class="mb-3">
+            <label for="productTitle" class="form-label">Title</label>
+            <input id="productTitle" name="title" class="form-control" required maxlength="80" placeholder="Product title">
+          </div>
+          <div class="mb-3">
+            <label for="productImage" class="form-label">Image</label>
+            <div class="d-flex gap-2 align-items-center">
+              <input id="productImage" name="image" type="file" class="form-control" accept="image/*" style="max-width: 70%;">
+              <button type="button" id="openMediaPicker" class="btn btn-outline-secondary btn-sm">Select from Media</button>
+            </div>
+            <input type="hidden" id="imageFromMedia" name="image_from_media" value="">
+            <div class="form-text">Upload a new image or select one already in media/products/. To remove existing image on edit, check "Remove image".</div>
+            <div class="form-check mt-2" id="clearImageWrapper" style="display:none;">
+              <input class="form-check-input" type="checkbox" value="true" id="imageClear" name="image-clear">
+              <label class="form-check-label" for="imageClear">Remove existing image</label>
+            </div>
+            <div id="imagePreview" class="mt-2" style="display:none;">
+              <div class="small text-muted">Selected image:</div>
+              <img id="imagePreviewImg" src="" alt="Preview" style="max-width: 100%; max-height: 180px; border:1px solid #eee; border-radius:6px;">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="productDesc" class="form-label">Description</label>
+            <textarea id="productDesc" name="description" class="form-control" rows="3" maxlength="200" placeholder="Short description"></textarea>
+          </div>
+
+          <div class="mb-3">
+                <label for="productCategory" class="form-label">Category</label>
+                   <div class="d-flex gap-2 align-items-center">
+                    <select id="productCategory" name="category" class="form-control">
+                     <option value="">-- No Category --</option>
+                      {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                         {% endfor %}
+                         </select>
+                          <button type="button" id="addCategoryBtn" class="btn btn-outline-secondary btn-sm" title="Add category">+ Add</button>
+                        </div>
+                    <div class="form-text">Select a category or leave blank. Users can search by category name.</div>
+            </div>
+
+
+          <div class="mb-3">
+            <label for="productPrice" class="form-label">Price (INR)</label>
+            <input id="productPrice" name="price" class="form-control" required type="number" step="0.01" min="0" placeholder="e.g. 499.00">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button id="saveProductBtn" type="submit" class="btn btn-danger">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bootstrap + JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Media Picker Modal -->
+  <div class="modal fade" id="mediaPickerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Select from Media (products)</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="mediaGrid" class="row g-3"></div>
+          <div id="mediaEmpty" class="text-muted" style="display:none;">No images found in media/products/.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+   <!-- Add Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <form id="addCategoryForm" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Category</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label">Category name</label>
+        <input id="newCategoryName" name="name" class="form-control" maxlength="80" required placeholder="e.g. Home Decor">
+        <div id="addCatFeedback" class="form-text text-danger" style="display:none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button id="saveCategoryBtn" type="submit" class="btn btn-danger">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+  <script>
+  (function () {
+    // CSRF helper (reads csrftoken cookie)
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    const cardContainer = document.getElementById('cardContainer');
+    const addCard = document.getElementById('addCard');
+
+    // Modal elements
+    const productModalEl = document.getElementById('productModal');
+    const productModal = new bootstrap.Modal(productModalEl);
+    const productForm = document.getElementById('productForm');
+    const modalTitle = document.getElementById('productModalLabel');
+    const productIdInput = document.getElementById('productId');
+    const productTitleInput = document.getElementById('productTitle');
+    const productImageInput = document.getElementById('productImage');
+    const productDescInput = document.getElementById('productDesc');
+    const productCategoryInput = document.getElementById('productCategory');
+    const productPriceInput = document.getElementById('productPrice');
+    const imageClearCheckbox = document.getElementById('imageClear');
+    const clearImageWrapper = document.getElementById('clearImageWrapper');
+    const openMediaPickerBtn = document.getElementById('openMediaPicker');
+    const imageFromMediaInput = document.getElementById('imageFromMedia');
+    const imagePreview = document.getElementById('imagePreview');
+    const imagePreviewImg = document.getElementById('imagePreviewImg');
+    const mediaPickerEl = document.getElementById('mediaPickerModal');
+    const mediaPicker = new bootstrap.Modal(mediaPickerEl);
+    const mediaGrid = document.getElementById('mediaGrid');
+    const mediaEmpty = document.getElementById('mediaEmpty');
+    // When choosing a file manually, clear any media selection
+    productImageInput.addEventListener('change', () => {
+      if (productImageInput.files && productImageInput.files[0]) {
+        imageFromMediaInput.value = '';
+        imagePreview.style.display = 'none';
+        imagePreviewImg.src = '';
+      }
+    });
+
+    // Open media picker
+    openMediaPickerBtn.addEventListener('click', () => {
+      // load media list
+      mediaGrid.innerHTML = '';
+      mediaEmpty.style.display = 'none';
+      fetch("{% url 'list_media_products' %}", { credentials: 'same-origin' })
+        .then(r => r.json())
+        .then(data => {
+          if (!data || !data.ok) throw new Error((data && data.error) || 'Failed to load media');
+          const files = data.files || [];
+          if (files.length === 0) {
+            mediaEmpty.style.display = 'block';
+          } else {
+            const frag = document.createDocumentFragment();
+            files.forEach(f => {
+              const col = document.createElement('div');
+              col.className = 'col-6 col-md-3';
+              col.innerHTML = `
+                <div class="border rounded p-1 h-100 d-flex flex-column">
+                  <img src="${f.url}" alt="${f.name}" class="img-fluid" style="object-fit:cover; height:120px;">
+                  <div class="text-truncate small mt-1" title="${f.path}">${f.name}</div>
+                  <button type="button" class="btn btn-sm btn-outline-primary mt-2 select-media" data-path="${f.path}" data-url="${f.url}">Select</button>
+                </div>`;
+              frag.appendChild(col);
+            });
+            mediaGrid.appendChild(frag);
+          }
+          mediaPicker.show();
+        })
+        .catch(err => {
+          console.error(err);
+          alert('Could not load media list');
+        });
+    });
+
+    // Handle select in media modal
+    mediaPickerEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('.select-media');
+      if (!btn) return;
+      const path = btn.getAttribute('data-path');
+      const url = btn.getAttribute('data-url');
+      if (!path) return;
+      // clear file input value
+      productImageInput.value = '';
+      // set hidden field
+      imageFromMediaInput.value = path;
+      // show preview
+      imagePreviewImg.src = url;
+      imagePreview.style.display = 'block';
+      mediaPicker.hide();
+    });
+
+    // curated fallback images (accessories / ethnic wares / home decor)
+    const fallbackImages = [
+      "https://images.unsplash.com/photo-1520975913579-6f8d2a437f9e?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=1",
+      "https://images.unsplash.com/photo-1584467735873-3e8f20b1170d?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=2",
+      "https://images.unsplash.com/photo-1549887534-7c4d8aa9a0aa?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=3",
+      "https://images.unsplash.com/photo-1600180758890-3b2d0a3b7b1a?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=4",
+      "https://images.unsplash.com/photo-1543163521-1bf539c55e7b?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=5",
+      "https://images.unsplash.com/photo-1520975661921-0d38d0f4a8a6?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=6",
+      "https://images.unsplash.com/photo-1520975913579-6f8d2a437f9f?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3&s=7"
+    ];
+
+    // helpers
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function createCardElement(data) {
+      const col = document.createElement('div');
+      col.className = 'col-md-4';
+      col.setAttribute('data-id', data.id);
+      if (data.category_id) {
+        col.setAttribute('data-category-id', data.category_id);
+      }
+
+      const imgSrc = data.image_url && data.image_url !== '' ? data.image_url : 'https://via.placeholder.com/600x400?text=Loading';
+      const priceText = (data.price !== undefined && data.price !== null) ? escapeHtml(String(data.price)) : '0.00';
+      col.innerHTML = `
+        <div class="card">
+          <img src="${escapeHtml(imgSrc)}" class="card-img-top" alt="${escapeHtml(data.title)}" onerror="this.onerror=null;this.src='https://via.placeholder.com/600x400?text=No+Image'">
+          <div class="card-body text-center">
+            <h5 class="card-title">${escapeHtml(data.title)}</h5>
+            <p class="card-text text-truncate" style="max-height:3.6em; overflow:hidden;">${escapeHtml(data.description)}</p>
+            <p class="card-price">₹ ${priceText}</p>
+            <div class="card-actions">
+              <button class="btn btn-sm btn-danger btn-edit" data-action="edit">Edit</button>
+              <button class="btn btn-sm btn-danger btn-delete" data-action="delete">Delete</button>
+            </div>
+          </div>
+        </div>
+      `;
+      return col;
+    }
+
+    function updateCardElementDom(col, data) {
+      const imgEl = col.querySelector('.card-img-top');
+      const titleEl = col.querySelector('.card-title');
+      const descEl = col.querySelector('.card-text');
+      const priceEl = col.querySelector('.card-price');
+      if (imgEl) {
+        imgEl.src = data.image_url && data.image_url !== '' ? data.image_url : 'https://via.placeholder.com/600x400?text=No+Image';
+        imgEl.alt = data.title;
+      }
+      if (titleEl) titleEl.textContent = data.title;
+      if (descEl) descEl.textContent = data.description;
+      if (priceEl) priceEl.textContent = '₹ ' + (data.price !== undefined && data.price !== null ? String(data.price) : '0.00');
+      // Update category data attribute
+      if (data.category_id) {
+        col.setAttribute('data-category-id', data.category_id);
+      } else {
+        col.removeAttribute('data-category-id');
+      }
+    }
+
+    // assign curated fallback images to cards that need them
+    function applyFallbackImages() {
+      const cols = cardContainer.querySelectorAll('[data-id]');
+      cols.forEach(col => {
+        const img = col.querySelector('.card-img-top');
+        if (!img) return;
+        // if the image is a placeholder or the src includes "placeholder" or "Loading", pick a curated image
+        const src = img.getAttribute('src') || '';
+        if (src.includes('placeholder.com') || src.toLowerCase().includes('loading')) {
+          const id = parseInt(col.getAttribute('data-id')) || 0;
+          const idx = Math.abs(id) % fallbackImages.length;
+          img.src = fallbackImages[idx] + "&auto=format&fit=crop&w=900&q=80";
+        }
+      });
+    }
+
+    // + click => open modal for create
+    addCard.addEventListener('click', () => {
+      modalTitle.textContent = 'Add Product';
+      productIdInput.value = '';
+      productForm.reset();
+      clearImageWrapper.style.display = 'none';
+      productModal.show();
+    });
+
+    // delegate edit/delete clicks
+    cardContainer.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const col = btn.closest('[data-id]');
+      if (!col) return;
+      const id = col.getAttribute('data-id');
+
+      if (btn.dataset.action === 'edit') {
+        modalTitle.textContent = 'Edit Product';
+        const title = col.querySelector('.card-title')?.textContent || '';
+        const desc = col.querySelector('.card-text')?.textContent || '';
+        const img = col.querySelector('.card-img-top')?.getAttribute('src') || '';
+
+        // fill price from the card into modal
+        const price = col.querySelector('.card-price')?.textContent?.replace(/[^0-9.]/g,'') || '';
+        productPriceInput.value = price;
+
+        // fill category from data attribute
+        const categoryId = col.getAttribute('data-category-id') || '';
+        productCategoryInput.value = categoryId;
+
+        productIdInput.value = id;
+        productTitleInput.value = title;
+        productDescInput.value = desc;
+        productImageInput.value = '';
+        clearImageWrapper.style.display = img.includes('placeholder.com') ? 'none' : 'block';
+        imageClearCheckbox.checked = false;
+
+        productModal.show();
+      } else if (btn.dataset.action === 'delete') {
+        if (!confirm('Delete this product?')) return;
+        fetch("{% url 'delete_product' 0 %}".replace('/0/', `/${id}/`), {
+          method: 'POST',
+          headers: { 'X-CSRFToken': csrftoken }
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (data.deleted) {
+            col.remove();
+          } else {
+            alert('Delete failed');
+          }
+        })
+        .catch(err => { console.error(err); alert('Delete failed'); });
+      }
+    });
+
+    // form submit -> create or update via AJAX
+    productForm.addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const id = productIdInput.value;
+      const formData = new FormData();
+      formData.append('title', productTitleInput.value.trim());
+      formData.append('description', productDescInput.value.trim());
+      formData.append('category', productCategoryInput.value || '');
+      formData.append('price', productPriceInput.value || '0');
+
+      if (productImageInput.files && productImageInput.files[0]) {
+        formData.append('image', productImageInput.files[0]);
+      } else if (imageFromMediaInput.value) {
+        formData.append('image_from_media', imageFromMediaInput.value);
+      } else if (id && imageClearCheckbox && imageClearCheckbox.checked) {
+        formData.append('image-clear', 'true');
+      }
+
+      const url = id ? ("{% url 'edit_product' 0 %}".replace('/0/', `/${id}/`)) : "{% url 'add_product' %}";
+
+      fetch(url, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrftoken },
+        body: formData
+      })
+      .then(async (res) => {
+        if (!res.ok) {
+          const err = await res.json().catch(()=>({}));
+          throw new Error(err.errors ? JSON.stringify(err.errors) : 'Server error');
+        }
+        return res.json();
+      })
+      .then(data => {
+        const product = data.product;
+        if (id) {
+          const existingCol = cardContainer.querySelector(`[data-id="${id}"]`);
+          if (existingCol) updateCardElementDom(existingCol, product);
+        } else {
+          const newCol = createCardElement(product);
+          const addCol = addCard.parentElement;
+          cardContainer.insertBefore(newCol, addCol);
+          // apply fallback on the new element if needed
+          applyFallbackImages();
+        }
+        productModal.hide();
+        productForm.reset();
+        clearImageWrapper.style.display = 'none';
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Save failed: ' + err.message);
+      });
+    });
+
+    // initial fallback assignment after DOM loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      applyFallbackImages();
+    });
+    // Category add UI + AJAX
+(function() {
+  const addCategoryBtn = document.getElementById('addCategoryBtn');
+  const addCategoryModalEl = document.getElementById('addCategoryModal');
+  const addCategoryModal = addCategoryModalEl ? new bootstrap.Modal(addCategoryModalEl) : null;
+  const addCategoryForm = document.getElementById('addCategoryForm');
+  const newCategoryName = document.getElementById('newCategoryName');
+  const addCatFeedback = document.getElementById('addCatFeedback');
+  const productCategorySelect = document.getElementById('productCategory');
+
+  if (!addCategoryBtn || !addCategoryForm || !productCategorySelect) {
+    // required elements not present, silently skip wiring to avoid runtime errors
+    return;
+  }
+
+  addCategoryBtn.addEventListener('click', () => {
+    if (addCatFeedback) addCatFeedback.style.display = 'none';
+    if (newCategoryName) newCategoryName.value = '';
+    if (addCategoryModal) addCategoryModal.show();
+    setTimeout(() => newCategoryName && newCategoryName.focus(), 200);
+  });
+
+  
+
+  addCategoryForm?.addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const name = newCategoryName.value.trim();
+    if (!name) {
+      addCatFeedback.textContent = 'Category name cannot be empty';
+      addCatFeedback.style.display = 'block';
+      return;
+    }
+    addCatFeedback.style.display = 'none';
+    const form = new FormData();
+    form.append('name', name);
+
+    fetch("{% url 'add_category_ajax' %}", {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrftoken },
+      body: form,
+      credentials: 'same-origin'
+    })
+    .then(async res => {
+      if (res.ok) return res.json();
+      const body = await res.json().catch(()=>({}));
+      throw { status: res.status, body };
+    })
+    .then(data => {
+      if (!data.ok) throw data;
+      const cat = data.category;
+      const opt = document.createElement('option');
+      opt.value = cat.id;
+      opt.textContent = cat.name;
+      productCategorySelect.appendChild(opt);
+      productCategorySelect.value = String(cat.id);
+      addCategoryModal.hide();
+    })
+    .catch(err => {
+      console.error('Add category error', err);
+      if (err && err.status === 409 && err.body && err.body.category) {
+        // already exists — select it
+        const cat = err.body.category;
+        let existing = productCategorySelect.querySelector(`option[value="${cat.id}"]`);
+        if (!existing) {
+          const opt = document.createElement('option');
+          opt.value = cat.id;
+          opt.textContent = cat.name;
+          productCategorySelect.appendChild(opt);
+        }
+        productCategorySelect.value = String(cat.id);
+        addCategoryModal.hide();
+        return;
+      }
+      addCatFeedback.textContent = (err && err.body && err.body.error) ? err.body.error : 'Save failed';
+      addCatFeedback.style.display = 'block';
+    });
+  });
+})();
+
+
+  })();
+  </script>
+</body>
+</html>
