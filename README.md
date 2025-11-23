@@ -26,11 +26,12 @@ A fully responsive and interactive shopping website built using core web technol
    Clean visual theme with consistent colors and typography
 
    Mobile-friendly navigation bar
+ 
  => Technologies Used
 
-    * HTML5 — Semantic page structure
+   * HTML5 — Semantic page structure
 
-    * CSS3 — Responsive styling & animations
+   * CSS3 — Responsive styling & animations
 
-    * JavaScript (ES6) — Logic, interactions & data handling
+   * JavaScript (ES6) — Logic, interactions & data handling
 
